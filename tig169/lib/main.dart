@@ -4,6 +4,7 @@ Kom in sent i denna kurs och har inte hunnit med mer än detta.
 Det går att lägga till items på listan. 
 Nästa steg är att skapa en sida där man matar in information för itemet man vill lägga till i listan.
 
+
 */
 
 import 'package:flutter/material.dart';
