@@ -1,28 +1,24 @@
-/*
-Kom in sent i denna kurs och har inte hunnit med mer än detta. 
+/* 
+  Har inte hunnit med mer än detta denna vecka.
 
-Det går att lägga till items på listan. 
-Nästa steg är att skapa en sida där man matar in information för itemet man vill lägga till i listan.
-
+  Nu fungerar popup menyn och att lägga till items.
+  Nästa steg är att försöka lägga till en checkbox och en sorteringsmeny - plus det som gäller för steg 3. 
 
 */
 
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ToDo app with list',
       theme: ThemeData(
         primarySwatch: Colors.red,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'ToDo List'),
+      home: MyHomePage(),
     );
   }
 }
@@ -37,36 +33,68 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<String> _todoItems = [];
-
-  void _addTodoItem() {
-    setState(() {
-      int index = _todoItems.length;
-      _todoItems.add('Item ' + index.toString());
-    });
-  }
-
-  // Build the whole list of todo items
-  Widget _buildTodoList() {
-    return ListView.builder(
-      itemBuilder: (context, index) {
-        return _buildTodoItem(_todoItems[index]);
-      },
-    );
-  }
-
-  // Build a single todo item
-  Widget _buildTodoItem(String todoText) {
-    return ListTile(title: Text(todoText));
-  }
+  final List<String> _todoItems = <String>[];
+  final TextEditingController _textFieldController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Todo List')),
-      body: _buildTodoList(),
+      body: ListView(children: _buildTodoList()),
       floatingActionButton: FloatingActionButton(
-          onPressed: _addTodoItem, tooltip: 'Add task', child: Icon(Icons.add)),
+          onPressed: () => _popUp(context),
+          tooltip: 'Add Item',
+          child: Icon(Icons.add)),
     );
+  }
+
+  void _addTodoItem(String todoText) {
+    setState(() {
+      _todoItems.add(todoText);
+    });
+    _textFieldController.clear();
+  }
+
+  // Build the todo list
+  Widget _buildTodoItem(String todoText) {
+    return ListTile(title: Text(todoText));
+  }
+
+  List<Widget> _buildTodoList() {
+    final List<Widget> _todoWidgets = <Widget>[];
+    for (String todoText in _todoItems) {
+      _todoWidgets.add(_buildTodoItem(todoText));
+    }
+    return _todoWidgets;
+  }
+
+  // Build a todo item
+  Future<AlertDialog> _popUp(BuildContext context) async {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Add task'),
+            content: TextField(
+              controller: _textFieldController,
+              decoration: const InputDecoration(hintText: 'Enter task'),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: const Text('ADD'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _addTodoItem(_textFieldController.text);
+                },
+              ),
+              FlatButton(
+                child: const Text('CANCEL'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        });
   }
 }
