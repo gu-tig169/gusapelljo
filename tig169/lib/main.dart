@@ -1,12 +1,6 @@
-/* 
-  Har inte hunnit med mer än detta denna vecka.
-
-  Nu fungerar popup menyn och att lägga till items.
-  Nästa steg är att försöka lägga till en checkbox och en sorteringsmeny - plus det som gäller för steg 3. 
-
-*/
-
 import 'package:flutter/material.dart';
+
+import 'lkp_sorting.dart';
 
 void main() => runApp(MyApp());
 
@@ -33,13 +27,29 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<String> _todoItems = <String>[];
+  //final List<Items> _todoItems = [];
+  final List<String> _todoItems = [];
   final TextEditingController _textFieldController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Todo List')),
+      appBar: AppBar(
+        title: Text('Todo List'),
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            onSelected: choiceAction,
+            itemBuilder: (BuildContext context) {
+              return Lkp_sorting.choices.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          )
+        ],
+      ),
       body: ListView(children: _buildTodoList()),
       floatingActionButton: FloatingActionButton(
           onPressed: () => _popUp(context),
@@ -48,24 +58,35 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _addTodoItem(String todoText) {
-    setState(() {
-      _todoItems.add(todoText);
-    });
-    _textFieldController.clear();
+  //PopupMenu
+  void choiceAction(String choice) {
+    if (choice == Lkp_sorting.All) {
+      print(Lkp_sorting.All);
+    } else if (choice == Lkp_sorting.Done) {
+      print(Lkp_sorting.Done);
+    } else if (choice == Lkp_sorting.Undone) {
+      print(Lkp_sorting.Undone);
+    }
   }
 
   // Build the todo list
-  Widget _buildTodoItem(String todoText) {
-    return ListTile(title: Text(todoText));
-  }
-
   List<Widget> _buildTodoList() {
+    bool isChecked = true;
     final List<Widget> _todoWidgets = <Widget>[];
     for (String todoText in _todoItems) {
-      _todoWidgets.add(_buildTodoItem(todoText));
+      _todoWidgets.add(_buildTodoItem(todoText, isChecked));
     }
     return _todoWidgets;
+  }
+
+  Widget _buildTodoItem(String todoText, bool isChecked) {
+    return ListTile(
+        leading: Checkbox(
+            value: isChecked,
+            onChanged: (bool value) {
+              isChecked = value;
+            }),
+        title: Text(todoText));
   }
 
   // Build a todo item
@@ -84,7 +105,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: const Text('ADD'),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  _addTodoItem(_textFieldController.text);
+                  if (_textFieldController.text.isEmpty) {
+                    print("You need to add text!");
+                  } else {
+                    _addTodoItem(_textFieldController.text);
+                  }
                 },
               ),
               FlatButton(
@@ -96,5 +121,12 @@ class _MyHomePageState extends State<MyHomePage> {
             ],
           );
         });
+  }
+
+  void _addTodoItem(String todoText) {
+    setState(() {
+      _todoItems.add(todoText);
+    });
+    _textFieldController.clear();
   }
 }
