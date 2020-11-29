@@ -71,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Build the todo list
   List<Widget> _buildTodoList() {
-    bool isChecked = true;
+    bool isChecked = false;
     final List<Widget> _todoWidgets = <Widget>[];
     for (String todoText in _todoItems) {
       _todoWidgets.add(_buildTodoItem(todoText, isChecked));
