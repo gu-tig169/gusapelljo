@@ -1,28 +1,26 @@
-/*
-Kom in sent i denna kurs och har inte hunnit med mer än detta. 
-
-Det går att lägga till items på listan. 
-Nästa steg är att skapa en sida där man matar in information för itemet man vill lägga till i listan.
-
-
-*/
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import './lkpfiltering.dart';
+import './model.dart';
+import './todoList.dart';
 
 void main() {
-  runApp(MyApp());
+  var state = AppState();
+  state.getList();
+  runApp((ChangeNotifierProvider(
+      create: (context) => state, child: ToDoListApp())));
 }
 
-class MyApp extends StatelessWidget {
+class ToDoListApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ToDo app with list',
       theme: ThemeData(
         primarySwatch: Colors.red,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'ToDo List'),
+      home: MyHomePage(),
     );
   }
 }
@@ -33,40 +31,85 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  MyHomePageState createState() => MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  List<String> _todoItems = [];
+class MyHomePageState extends State<MyHomePage> {
+  final TextEditingController _textFieldController = TextEditingController();
+  String filter = 'All';
 
-  void _addTodoItem() {
-    setState(() {
-      int index = _todoItems.length;
-      _todoItems.add('Item ' + index.toString());
-    });
-  }
-
-  // Build the whole list of todo items
-  Widget _buildTodoList() {
-    return ListView.builder(
-      itemBuilder: (context, index) {
-        return _buildTodoItem(_todoItems[index]);
-      },
-    );
-  }
-
-  // Build a single todo item
-  Widget _buildTodoItem(String todoText) {
-    return ListTile(title: Text(todoText));
-  }
-
+  //creates the basic UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Todo List')),
-      body: _buildTodoList(),
+      appBar: AppBar(
+        title: Text('Todo List'),
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            onSelected: (String choice) {
+              setState(() {
+                filter = choice;
+              });
+            },
+            itemBuilder: (BuildContext context) {
+              return Lkpfiltering.choices.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          )
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
-          onPressed: _addTodoItem, tooltip: 'Add task', child: Icon(Icons.add)),
+          onPressed: () => _popUp(context),
+          tooltip: 'Add Item',
+          child: Icon(Icons.add)),
+      body: Consumer<AppState>(
+          builder: (context, state, child) =>
+              TodoList(state.listFromFilter(filter))),
     );
+  }
+
+  //popup for adding new todo items
+  Future<AlertDialog> _popUp(BuildContext context) async {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Add task'),
+            content: TextField(
+              controller: _textFieldController,
+              decoration: const InputDecoration(hintText: 'Enter task'),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: const Text('ADD'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  if (_textFieldController.text.isEmpty) {
+                    print("You need to add text!");
+                  } else {
+                    _addTodoItem(context, _textFieldController.text);
+                  }
+                },
+              ),
+              FlatButton(
+                child: const Text('CANCEL'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        });
+  }
+
+  //call the addTodo method
+  void _addTodoItem(BuildContext context, String input) {
+    Provider.of<AppState>(context, listen: false)
+        .addTodo(TodoItem(todoText: input));
+    _textFieldController.clear();
   }
 }
