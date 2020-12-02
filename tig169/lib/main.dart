@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import 'lkp_sorting.dart';
+import './lkpfiltering.dart';
+import './model.dart';
+import './todoList.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  var state = AppState();
+  state.getList();
+  runApp((ChangeNotifierProvider(
+      create: (context) => state, child: ToDoListApp())));
+}
 
-class MyApp extends StatelessWidget {
+class ToDoListApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -23,14 +31,14 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  MyHomePageState createState() => MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  //final List<Items> _todoItems = [];
-  final List<String> _todoItems = [];
+class MyHomePageState extends State<MyHomePage> {
   final TextEditingController _textFieldController = TextEditingController();
+  String filter = 'All';
 
+  //creates the basic UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,9 +46,13 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text('Todo List'),
         actions: <Widget>[
           PopupMenuButton<String>(
-            onSelected: choiceAction,
+            onSelected: (String choice) {
+              setState(() {
+                filter = choice;
+              });
+            },
             itemBuilder: (BuildContext context) {
-              return Lkp_sorting.choices.map((String choice) {
+              return Lkpfiltering.choices.map((String choice) {
                 return PopupMenuItem<String>(
                   value: choice,
                   child: Text(choice),
@@ -50,46 +62,17 @@ class _MyHomePageState extends State<MyHomePage> {
           )
         ],
       ),
-      body: ListView(children: _buildTodoList()),
       floatingActionButton: FloatingActionButton(
           onPressed: () => _popUp(context),
           tooltip: 'Add Item',
           child: Icon(Icons.add)),
+      body: Consumer<AppState>(
+          builder: (context, state, child) =>
+              TodoList(state.listFromFilter(filter))),
     );
   }
 
-  //PopupMenu
-  void choiceAction(String choice) {
-    if (choice == Lkp_sorting.All) {
-      print(Lkp_sorting.All);
-    } else if (choice == Lkp_sorting.Done) {
-      print(Lkp_sorting.Done);
-    } else if (choice == Lkp_sorting.Undone) {
-      print(Lkp_sorting.Undone);
-    }
-  }
-
-  // Build the todo list
-  List<Widget> _buildTodoList() {
-    bool isChecked = false;
-    final List<Widget> _todoWidgets = <Widget>[];
-    for (String todoText in _todoItems) {
-      _todoWidgets.add(_buildTodoItem(todoText, isChecked));
-    }
-    return _todoWidgets;
-  }
-
-  Widget _buildTodoItem(String todoText, bool isChecked) {
-    return ListTile(
-        leading: Checkbox(
-            value: isChecked,
-            onChanged: (bool value) {
-              isChecked = value;
-            }),
-        title: Text(todoText));
-  }
-
-  // Build a todo item
+  //popup for adding new todo items
   Future<AlertDialog> _popUp(BuildContext context) async {
     return showDialog(
         context: context,
@@ -108,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (_textFieldController.text.isEmpty) {
                     print("You need to add text!");
                   } else {
-                    _addTodoItem(_textFieldController.text);
+                    _addTodoItem(context, _textFieldController.text);
                   }
                 },
               ),
@@ -123,10 +106,10 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
-  void _addTodoItem(String todoText) {
-    setState(() {
-      _todoItems.add(todoText);
-    });
+  //call the addTodo method
+  void _addTodoItem(BuildContext context, String input) {
+    Provider.of<AppState>(context, listen: false)
+        .addTodo(TodoItem(todoText: input));
     _textFieldController.clear();
   }
 }
